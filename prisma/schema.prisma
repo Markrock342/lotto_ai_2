@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model House {
+  id             String   @id @default(cuid())
+  name           String
+  pricePerSet    Int      @default(120)
+  defaultMaxRisk Int?
+  defaultMaxSets Int?
+  ratesJson          String
+  customerListJson   String   @default("[]")
+  createdAt          DateTime @default(now())
+  users          User[]
+  draws          Draw[]
+  numberLimits   NumberLimit[]
+}
+
+model User {
+  id                String   @id @default(cuid())
+  houseId           String
+  house             House    @relation(fields: [houseId], references: [id], onDelete: Cascade)
+  username          String
+  passwordHash      String
+  displayName       String
+  role              String   @default("staff")
+  tokenVersion      Int      @default(0)
+  passwordChangedAt DateTime?
+  createdAt         DateTime @default(now())
+  bets              Bet[]
+
+  @@unique([houseId, username])
+}
+
+model Draw {
+  id            String    @id @default(cuid())
+  houseId       String
+  house         House     @relation(fields: [houseId], references: [id], onDelete: Cascade)
+  label         String
+  status        String    @default("open")
+  result4       String?
+  settledAt     DateTime?
+  totalReceived Float?
+  totalPayout   Float?
+  createdAt     DateTime  @default(now())
+  bets          Bet[]
+  slips         Slip[]
+}
+
+model Slip {
+  id           String   @id @default(cuid())
+  drawId       String
+  draw         Draw     @relation(fields: [drawId], references: [id], onDelete: Cascade)
+  customerName String?
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  bets         Bet[]
+
+  @@index([drawId])
+}
+
+model Bet {
+  id          String   @id @default(cuid())
+  drawId      String
+  draw        Draw     @relation(fields: [drawId], references: [id], onDelete: Cascade)
+  slipId      String?
+  slip        Slip?    @relation(fields: [slipId], references: [id], onDelete: SetNull)
+  number      String
+  amount      Float
+  status      String   @default("active")
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([drawId, number])
+  @@index([drawId, status])
+  @@index([slipId])
+}
+
+model NumberLimit {
+  id       String  @id @default(cuid())
+  houseId  String
+  house    House   @relation(fields: [houseId], references: [id], onDelete: Cascade)
+  number   String
+  maxRisk  Int?
+  maxSets  Int?
+
+  @@unique([houseId, number])
+}
