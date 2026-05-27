@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { PageHeader, QuickLink, StatBox, Loading, Empty } from "@/components/ui";
 import { ui } from "@/components/ui";
 
@@ -168,16 +169,21 @@ export default function DashboardPage() {
           <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">ประวัติผลรางวัล ({data.recentDraws.length} งวด)</h2>
           <ul className="mt-3 space-y-2">
             {data.recentDraws.map((d) => (
-              <li
-                key={d.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-800"
-              >
-                <span className="w-28 font-medium text-slate-700 dark:text-slate-300">{d.label}</span>
-                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{d.result4 ?? "—"}</span>
-                <span className="text-slate-500">฿{(d.totalReceived ?? 0).toLocaleString()}</span>
-                <span className={d.profit >= 0 ? "font-bold text-emerald-600" : "font-bold text-red-500"}>
-                  {d.profit >= 0 ? "+" : ""}฿{d.profit.toLocaleString()}
-                </span>
+              <li key={d.id}>
+                <Link
+                  href={`/reports?drawId=${d.id}`}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <span className="w-28 font-medium text-slate-700 dark:text-slate-300 hover:underline">{d.label}</span>
+                  <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{d.result4 ?? "—"}</span>
+                  <span className="text-slate-500">฿{(d.totalReceived ?? 0).toLocaleString()}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className={d.profit >= 0 ? "font-bold text-emerald-600" : "font-bold text-red-500"}>
+                      {d.profit >= 0 ? "+" : ""}฿{d.profit.toLocaleString()}
+                    </span>
+                    <span className="text-slate-400 font-bold">›</span>
+                  </div>
+                </Link>
               </li>
             ))}
           </ul>

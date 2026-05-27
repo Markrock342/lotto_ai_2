@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { PageHeader, StatBox, ui, Loading } from "@/components/ui";
 import type { DrawSettlement } from "@/lib/settlement";
 
@@ -148,6 +149,15 @@ export default function ResultsPage() {
           <p className="my-4 text-center font-mono text-4xl font-bold tracking-widest text-emerald-600 dark:text-emerald-400">
             ผลออก {s.result.fourDigit}
           </p>
+
+          <div className="mb-4">
+            <Link
+              href={`/reports?drawId=${data!.draw.id}`}
+              className="flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700 hover:bg-blue-100 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-300 transition-colors"
+            >
+              📊 ดูรายละเอียดรายงานของงวดนี้ (ยอดรับแยกตามเลข / รายละเอียดโพย)
+            </Link>
+          </div>
 
           {s.byPrizeType.length > 0 && (
             <section className={`${ui.tableWrap} mt-4`}>

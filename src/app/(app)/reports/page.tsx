@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { PageHeader, StatBox, ui } from "@/components/ui";
 import { PeriodFilter } from "@/components/period-filter";
 import type { ReportPeriod } from "@/lib/date-period";
@@ -29,9 +30,20 @@ type BetRow = {
 };
 
 export default function ReportsPage() {
-  const [period, setPeriod] = useState<ReportPeriod>("month");
+  return (
+    <Suspense fallback={<p className="p-8 text-center text-sm text-slate-500">กำลังโหลดรายงาน...</p>}>
+      <ReportsPageContent />
+    </Suspense>
+  );
+}
+
+function ReportsPageContent() {
+  const searchParams = useSearchParams();
+  const queryDrawId = searchParams.get("drawId");
+
+  const [period, setPeriod] = useState<ReportPeriod>(queryDrawId ? "all" : "month");
   const [draws, setDraws] = useState<DrawRow[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(queryDrawId);
   const [bets, setBets] = useState<BetRow[]>([]);
   const [showCancelled, setShowCancelled] = useState(false);
   const [summaryMode, setSummaryMode] = useState<string>("4 ตัวตรง");
