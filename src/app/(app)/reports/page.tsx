@@ -138,7 +138,7 @@ function ReportsPageContent() {
   const selectedCustomerSettlement = useMemo(() => {
     if (!settlement || selectedCustomer === "all") return null;
     const customerSlips = slips.filter(s => (s.customerName || "(ไม่ระบุชื่อ)") === selectedCustomer).map(s => s.id);
-    const related = settlement.bySlip.filter(s => customerSlips.includes(s.slipId));
+    const related = settlement.bySlip.filter(s => s.slipId !== null && customerSlips.includes(s.slipId));
     if (related.length === 0) return null;
     return related.reduce((acc, curr) => ({
       slipId: "merged",
