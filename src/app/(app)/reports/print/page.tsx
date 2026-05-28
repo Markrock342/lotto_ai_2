@@ -28,15 +28,17 @@ type BillResponse = {
   const searchParams = useSearchParams();
   const drawId = searchParams.get("drawId");
   const slipId = searchParams.get("slipId");
+  const customerName = searchParams.get("customerName");
   const [data, setData] = useState<BillResponse | null>(null);
 
   const load = useCallback(async () => {
     const q = new URLSearchParams();
     if (drawId) q.set("drawId", drawId);
     if (slipId) q.set("slipId", slipId);
+    if (customerName !== null) q.set("customerName", customerName);
     const res = await fetch(`/api/reports/bill?${q.toString()}`);
     if (res.ok) setData(await res.json());
-  }, [drawId, slipId]);
+  }, [drawId, slipId, customerName]);
 
   useEffect(() => {
     void load();

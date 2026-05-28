@@ -12,6 +12,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const drawIdParam = searchParams.get("drawId");
   const slipIdParam = searchParams.get("slipId");
+  const customerNameParam = searchParams.get("customerName");
 
   let draw;
   if (drawIdParam) {
@@ -43,6 +44,9 @@ export async function GET(request: Request) {
       drawId: draw.id,
       status: "active",
       ...(slip ? { slipId: slip.id } : {}),
+      ...(customerNameParam !== null 
+        ? { slip: { customerName: customerNameParam === "" ? null : customerNameParam } } 
+        : {}),
     },
     orderBy: { createdAt: "asc" },
     include: { createdBy: { select: { displayName: true } } },
@@ -76,7 +80,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     houseName: house.name,
     pricePerSet: house.pricePerSet,
-    customerName: slip?.customerName ?? null,
+    customerName: slip?.customerName ?? (customerNameParam !== null ? (customerNameParam || null) : null),
     draw: {
       id: draw.id,
       label: draw.label,

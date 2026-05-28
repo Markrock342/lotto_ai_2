@@ -1,4 +1,4 @@
-"use client";
+  "use client";
 
 import { useCallback, useEffect, useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -52,7 +52,7 @@ function ReportsPageContent() {
   const [slips, setSlips] = useState<
     { id: string; customerName: string | null; betCount: number }[]
   >([]);
-  const [billSlipId, setBillSlipId] = useState<string | "all">("all");
+  const [selectedCustomer, setSelectedCustomer] = useState<string | "all">("all");
   const [settlement, setSettlement] = useState<DrawSettlement | null>(null);
   const [searchPrize, setSearchPrize] = useState("");
   const [searchSummary, setSearchSummary] = useState("");
@@ -89,7 +89,7 @@ function ReportsPageContent() {
       if (slipRes.ok) {
         const { slips: s } = await slipRes.json();
         setSlips(s);
-        setBillSlipId("all");
+        setSelectedCustomer("all");
       } else {
         setSlips([]);
       }
@@ -117,15 +117,36 @@ function ReportsPageContent() {
   const settled = draws.filter((d) => d.status === "settled");
   const totalProfit = settled.reduce((s, d) => s + d.profit, 0);
 
-  const filteredBets = useMemo(() => {
-    if (billSlipId === "all") return bets;
-    return bets.filter((b) => b.slipId === billSlipId);
-  }, [bets, billSlipId]);
+  const uniqueCustomers = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const s of slips) {
+      const name = s.customerName || "(ไม่ระบุชื่อ)";
+      map.set(name, (map.get(name) || 0) + s.betCount);
+    }
+    return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
+  }, [slips]);
 
-  const selectedSlipSettlement = useMemo(() => {
-    if (!settlement || billSlipId === "all") return null;
-    return settlement.bySlip.find((s) => s.slipId === billSlipId) ?? null;
-  }, [settlement, billSlipId]);
+  const filteredBets = useMemo(() => {
+    if (selectedCustomer === "all") return bets;
+    return bets.filter((b) => {
+      const slip = slips.find(s => s.id === b.slipId);
+      const name = slip?.customerName || "(ไม่ระบุชื่อ)";
+      return name === selectedCustomer;
+    });
+  }, [bets, selectedCustomer, slips]);
+
+  const selectedCustomerSettlement = useMemo(() => {
+    if (!settlement || selectedCustomer === "all") return null;
+    const customerSlips = slips.filter(s => (s.customerName || "(ไม่ระบุชื่อ)") === selectedCustomer).map(s => s.id);
+    const related = settlement.bySlip.filter(s => customerSlips.includes(s.slipId));
+    if (related.length === 0) return null;
+    return related.reduce((acc, curr) => ({
+      slipId: "merged",
+      totalReceived: acc.totalReceived + curr.totalReceived,
+      totalPayout: acc.totalPayout + curr.totalPayout,
+      profit: acc.profit + curr.profit,
+    }), { slipId: "merged", totalReceived: 0, totalPayout: 0, profit: 0 });
+  }, [settlement, selectedCustomer, slips]);
 
   const filteredTotals = useMemo(() => {
     const active = filteredBets.filter((b) => b.status !== "cancelled");
@@ -214,14 +235,18 @@ function ReportsPageContent() {
   function openPrint() {
     if (!selectedId) return;
     const q = new URLSearchParams({ drawId: selectedId });
-    if (billSlipId !== "all") q.set("slipId", billSlipId);
+    if (selectedCustomer !== "all") {
+      q.set("customerName", selectedCustomer === "(ไม่ระบุชื่อ)" ? "" : selectedCustomer);
+    }
     window.open(`/reports/print?${q.toString()}`, "_blank");
   }
 
   async function handleCopyBill() {
     if (!selectedId) return;
     const q = new URLSearchParams({ drawId: selectedId });
-    if (billSlipId !== "all") q.set("slipId", billSlipId);
+    if (selectedCustomer !== "all") {
+      q.set("customerName", selectedCustomer === "(ไม่ระบุชื่อ)" ? "" : selectedCustomer);
+    }
     const res = await fetch(`/api/reports/bill?${q}`);
     if (!res.ok) return;
     const data = await res.json();
@@ -264,18 +289,18 @@ function ReportsPageContent() {
 
       <PeriodFilter value={period} onChange={setPeriod} />
 
-      {slips.length > 0 && (
+      {uniqueCustomers.length > 0 && (
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="text-sm text-slate-600 dark:text-slate-400">บิล:</span>
+          <span className="text-sm text-slate-600 dark:text-slate-400">ลูกค้า:</span>
           <select
-            value={billSlipId}
-            onChange={(e) => setBillSlipId(e.target.value)}
+            value={selectedCustomer}
+            onChange={(e) => setSelectedCustomer(e.target.value)}
             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
           >
             <option value="all">รวมทั้งงวด</option>
-            {slips.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.customerName ?? "(ไม่ระบุชื่อ)"} ({s.betCount} รายการ)
+            {uniqueCustomers.map((c) => (
+              <option key={c.name} value={c.name}>
+                {c.name} ({c.count} รายการ)
               </option>
             ))}
           </select>
@@ -295,26 +320,26 @@ function ReportsPageContent() {
       </div>
       {msg && <p className="mt-2 text-sm text-emerald-600">{msg}</p>}
 
-      {billSlipId !== "all" && (
+      {selectedCustomer !== "all" && (
         <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
           <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-            📊 ยอดสรุปสำหรับลูกค้า: {slips.find((s) => s.id === billSlipId)?.customerName ?? "(ไม่ระบุชื่อ)"}
+            📊 ยอดสรุปสำหรับลูกค้า: {selectedCustomer}
           </h3>
           <div className="mt-3 grid grid-cols-3 gap-3">
             <StatBox
               label="ยอดรับรวม"
-              value={`฿${(selectedSlipSettlement ? selectedSlipSettlement.totalReceived : filteredTotals.received).toLocaleString()}`}
+              value={`฿${(selectedCustomerSettlement ? selectedCustomerSettlement.totalReceived : filteredTotals.received).toLocaleString()}`}
               variant="accent"
             />
             <StatBox
               label="ยอดจ่าย"
-              value={selectedSlipSettlement ? `฿${selectedSlipSettlement.totalPayout.toLocaleString()}` : "—"}
-              variant={selectedSlipSettlement && selectedSlipSettlement.totalPayout > 0 ? "danger" : "default"}
+              value={selectedCustomerSettlement ? `฿${selectedCustomerSettlement.totalPayout.toLocaleString()}` : "—"}
+              variant={selectedCustomerSettlement && selectedCustomerSettlement.totalPayout > 0 ? "danger" : "default"}
             />
             <StatBox
               label="กำไรสุทธิ"
-              value={selectedSlipSettlement ? `${selectedSlipSettlement.profit >= 0 ? "+" : ""}฿${selectedSlipSettlement.profit.toLocaleString()}` : "—"}
-              variant={selectedSlipSettlement ? (selectedSlipSettlement.profit >= 0 ? "success" : "danger") : "default"}
+              value={selectedCustomerSettlement ? `${selectedCustomerSettlement.profit >= 0 ? "+" : ""}฿${selectedCustomerSettlement.profit.toLocaleString()}` : "—"}
+              variant={selectedCustomerSettlement ? (selectedCustomerSettlement.profit >= 0 ? "success" : "danger") : "default"}
             />
           </div>
         </div>
