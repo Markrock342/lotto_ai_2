@@ -70,7 +70,7 @@ export async function POST(request: Request) {
   }
 
   const exists = await prisma.user.findFirst({
-    where: { houseId: session.houseId, username },
+    where: { username },
   });
   if (exists) {
     return NextResponse.json({ error: "ชื่อผู้ใช้ซ้ำ" }, { status: 400 });
