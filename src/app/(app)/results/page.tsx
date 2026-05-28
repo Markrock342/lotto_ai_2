@@ -198,7 +198,10 @@ export default function ResultsPage() {
               <h2 className="border-b border-slate-200 px-4 py-3 text-sm font-bold dark:border-slate-700">
                 สรุปแยกบิล / ลูกค้า
               </h2>
-              <div className="max-h-[40vh] overflow-auto">
+              <p className="mt-2 text-[11px] text-slate-500 md:hidden px-4">
+                💡 ใช้นิ้วปัดเลื่อนขึ้น-ลงในตารางเพื่อดูสรุปแยกบิลทั้งหมด
+              </p>
+              <div className="max-h-[55vh] md:max-h-[40vh] overflow-auto">
                 <table className="w-full">
                   <thead>
                     <tr>
@@ -254,7 +257,10 @@ export default function ResultsPage() {
             {s.byNumber.filter((n) => n.payout > 0).length === 0 ? (
               <p className="py-10 text-center text-sm text-slate-500">ไม่มีโพยถูกรางวัล</p>
             ) : (
-              <div className="max-h-[50vh] overflow-auto">
+              <p className="mt-2 text-[11px] text-slate-500 md:hidden px-4">
+                💡 ใช้นิ้วปัดเลื่อนขึ้น-ลงในตารางเพื่อดูเลขที่ถูกรางวัลเพิ่มเติม
+              </p>
+              <div className="max-h-[60vh] md:max-h-[50vh] overflow-auto">
                 <table className="w-full">
                   <thead>
                     <tr>
@@ -288,7 +294,10 @@ export default function ResultsPage() {
               <h2 className="border-b border-slate-200 px-4 py-3 text-sm font-bold dark:border-slate-700">
                 ประวัติคนถูกรางวัล (ตามบิล)
               </h2>
-              <div className="max-h-[50vh] overflow-auto">
+              <p className="mt-2 text-[11px] text-slate-500 md:hidden px-4">
+                💡 ใช้นิ้วปัดเลื่อนขึ้น-ลงในตารางเพื่อดูประวัติคนถูกรางวัลเพิ่มเติม
+              </p>
+              <div className="max-h-[60vh] md:max-h-[50vh] overflow-auto">
                 <table className="w-full">
                   <thead>
                     <tr>

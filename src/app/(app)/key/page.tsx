@@ -597,7 +597,10 @@ export default function KeyPage() {
                 คัดลอก
               </button>
             </div>
-            <div className="max-h-[50vh] overflow-auto">
+            <p className="mt-2 text-[11px] text-slate-500 md:hidden px-4">
+              💡 ใช้นิ้วปัดเลื่อนขึ้น-ลงในตารางเพื่อดูสรุปต่อเลขทั้งหมด
+            </p>
+            <div className="max-h-[60vh] md:max-h-[50vh] overflow-auto">
               <table className="w-full">
                 <thead>
                   <tr>

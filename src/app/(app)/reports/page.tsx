@@ -420,7 +420,10 @@ function ReportsPageContent() {
           <h2 className="border-b border-slate-200 px-4 py-3 text-sm font-bold dark:border-slate-700">
             สรุปแยกบิล / ลูกค้า
           </h2>
-          <div className="max-h-[40vh] overflow-auto">
+          <p className="mt-2 text-[11px] text-slate-500 md:hidden px-4">
+            💡 ใช้นิ้วปัดเลื่อนขึ้น-ลงในตารางเพื่อดูสรุปแยกบิลทั้งหมด
+          </p>
+          <div className="max-h-[55vh] md:max-h-[40vh] overflow-auto">
             <table className="w-full">
               <thead>
                 <tr>
@@ -606,10 +609,13 @@ function ReportsPageContent() {
               ))}
             </div>
           </div>
+          <p className="mt-2 text-[11px] text-slate-500 md:hidden">
+            💡 ใช้นิ้วปัดเลื่อนขึ้น-ลงในตารางเพื่อดูตัวเลขอื่นๆ เพิ่มเติม
+          </p>
           {betSummary.length === 0 ? (
             <p className="mt-4 text-sm text-slate-500">ไม่มีข้อมูลเลขในหมวดหมู่นี้</p>
           ) : (
-            <div className="mt-3 max-h-[40vh] overflow-auto">
+            <div className="mt-3 max-h-[55vh] md:max-h-[40vh] overflow-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr>
@@ -665,10 +671,13 @@ function ReportsPageContent() {
               รวมที่ยกเลิก
             </label>
           </div>
+          <p className="mt-2 text-[11px] text-slate-500 md:hidden">
+            💡 ใช้นิ้วปัดเลื่อนขึ้น-ลงในตารางเพื่อดูโพยทั้งหมด
+          </p>
           {filteredBets.length === 0 ? (
             <p className="mt-4 text-sm text-slate-500">ไม่มีโพยในช่วงนี้</p>
           ) : (
-            <div className="mt-3 max-h-[35vh] overflow-auto">
+            <div className="mt-3 max-h-[50vh] md:max-h-[35vh] overflow-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr>
