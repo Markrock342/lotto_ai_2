@@ -58,6 +58,7 @@ export async function GET(request: Request) {
       at: b.createdAt,
       by: b.createdBy?.displayName ?? "—",
       customerName: b.slip?.customerName ?? null,
+      slipId: b.slipId,
     })),
   });
 }

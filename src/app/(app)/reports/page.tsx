@@ -27,6 +27,7 @@ type BetRow = {
   at: string;
   by: string;
   customerName?: string | null;
+  slipId?: string | null;
 };
 
 export default function ReportsPage() {
@@ -116,9 +117,25 @@ function ReportsPageContent() {
   const settled = draws.filter((d) => d.status === "settled");
   const totalProfit = settled.reduce((s, d) => s + d.profit, 0);
 
+  const filteredBets = useMemo(() => {
+    if (billSlipId === "all") return bets;
+    return bets.filter((b) => b.slipId === billSlipId);
+  }, [bets, billSlipId]);
+
+  const selectedSlipSettlement = useMemo(() => {
+    if (!settlement || billSlipId === "all") return null;
+    return settlement.bySlip.find((s) => s.slipId === billSlipId) ?? null;
+  }, [settlement, billSlipId]);
+
+  const filteredTotals = useMemo(() => {
+    const active = filteredBets.filter((b) => b.status !== "cancelled");
+    const received = active.reduce((sum, b) => sum + b.amount, 0);
+    return { received, count: active.length };
+  }, [filteredBets]);
+
   const betSummary = useMemo(() => {
-    if (!bets) return [];
-    const activeBets = bets.filter((b) => b.status !== "cancelled");
+    if (!filteredBets) return [];
+    const activeBets = filteredBets.filter((b) => b.status !== "cancelled");
     const map = new Map<string, { count: number; amount: number }>();
 
     for (const b of activeBets) {
@@ -146,11 +163,11 @@ function ReportsPageContent() {
     return Array.from(map.entries())
       .map(([number, data]) => ({ number, ...data }))
       .sort((a, b) => b.amount - a.amount);
-  }, [bets, summaryMode]);
+  }, [filteredBets, summaryMode]);
 
   /** สรุปยอดทุกประเภทรางวัลพร้อมกัน */
   const prizeCategorySummary = useMemo(() => {
-    const activeBets = bets.filter((b) => b.status !== "cancelled");
+    const activeBets = filteredBets.filter((b) => b.status !== "cancelled");
     const pad4 = (n: string) => n.replace(/\D/g, "").padStart(4, "0").slice(-4);
 
     // ประเภทที่ต้องการแสดง: key => { label, extractor(num4) }
@@ -179,7 +196,7 @@ function ReportsPageContent() {
       const uniqueNumbers = rows.length;
       return { key, label, extract, rows, totalSets, uniqueNumbers };
     });
-  }, [bets]);
+  }, [filteredBets]);
 
   /** เลขผลลัพธ์ ถ้าออกแล้ว */
   const resultDigits = useMemo(() => {
@@ -196,7 +213,9 @@ function ReportsPageContent() {
 
   function openPrint() {
     if (!selectedId) return;
-    window.open(`/reports/print?drawId=${selectedId}`, "_blank");
+    const q = new URLSearchParams({ drawId: selectedId });
+    if (billSlipId !== "all") q.set("slipId", billSlipId);
+    window.open(`/reports/print?${q.toString()}`, "_blank");
   }
 
   async function handleCopyBill() {
@@ -275,6 +294,31 @@ function ReportsPageContent() {
         </button>
       </div>
       {msg && <p className="mt-2 text-sm text-emerald-600">{msg}</p>}
+
+      {billSlipId !== "all" && (
+        <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+            📊 ยอดสรุปสำหรับลูกค้า: {slips.find((s) => s.id === billSlipId)?.customerName ?? "(ไม่ระบุชื่อ)"}
+          </h3>
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            <StatBox
+              label="ยอดรับรวม"
+              value={`฿${(selectedSlipSettlement ? selectedSlipSettlement.totalReceived : filteredTotals.received).toLocaleString()}`}
+              variant="accent"
+            />
+            <StatBox
+              label="ยอดจ่าย"
+              value={selectedSlipSettlement ? `฿${selectedSlipSettlement.totalPayout.toLocaleString()}` : "—"}
+              variant={selectedSlipSettlement && selectedSlipSettlement.totalPayout > 0 ? "danger" : "default"}
+            />
+            <StatBox
+              label="กำไรสุทธิ"
+              value={selectedSlipSettlement ? `${selectedSlipSettlement.profit >= 0 ? "+" : ""}฿${selectedSlipSettlement.profit.toLocaleString()}` : "—"}
+              variant={selectedSlipSettlement ? (selectedSlipSettlement.profit >= 0 ? "success" : "danger") : "default"}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="mt-4 grid grid-cols-3 gap-3">
         <StatBox label="งวดในช่วง" value={draws.length} />
@@ -577,7 +621,7 @@ function ReportsPageContent() {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-bold">
-                รายการโพย — {selected.label} ({bets.length} รายการ)
+                รายการโพย — {selected.label} ({filteredBets.length} รายการ)
               </h2>
               <input
                 type="text"
@@ -596,7 +640,7 @@ function ReportsPageContent() {
               รวมที่ยกเลิก
             </label>
           </div>
-          {bets.length === 0 ? (
+          {filteredBets.length === 0 ? (
             <p className="mt-4 text-sm text-slate-500">ไม่มีโพยในช่วงนี้</p>
           ) : (
             <div className="mt-3 max-h-[35vh] overflow-auto">
@@ -613,7 +657,7 @@ function ReportsPageContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {bets
+                  {filteredBets
                     .filter((b) => {
                       if (!searchBets.trim()) return true;
                       const q = searchBets.trim();
